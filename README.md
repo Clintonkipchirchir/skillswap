@@ -8,12 +8,6 @@ A community-driven web application built with Django and Django Rest Framework t
 - [Features](#features)
 - [Architecture & ERD](#architecture--erd)
 - [Tech Stack](#tech-stack)
-- [Installation](#installation)
-- [Usage](#usage)
-- [API Endpoints](#api-endpoints)
-- [Contributing](#contributing)
-- [License](#license)
-- [Contact](#contact)
 
 ## Overview
 

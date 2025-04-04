@@ -6,7 +6,7 @@ A community-driven web application built with Django and Django Rest Framework t
 
 - [Overview](#overview)
 - [Features](#features)
-- [Architecture & ERD](#architecture)
+- [Architecture](#architecture)
 - [Tech Stack](#tech-stack)
 
 ## Overview

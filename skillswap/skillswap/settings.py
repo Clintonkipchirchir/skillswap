@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     'massaging',
     'matching',
     'feedback',
+    'core',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [

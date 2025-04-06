@@ -10,7 +10,6 @@ admin.site.unregister(Group)
 class ProfileInline(admin.StackedInline):
     model = Profile
     verbose_name_plural = 'Profile'
-    # This widget makes it easier to manage many-to-many relationships
     filter_horizontal = ('offered_skills', 'desired_skills',)
 
 

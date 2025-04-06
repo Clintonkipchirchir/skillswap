@@ -1,75 +1,59 @@
-from django.contrib.auth.models import User
+# core/serializers.py
 from rest_framework import serializers
-from .models import Profile, Skill, Post, Match, Message, Schedule, Feedback
+from .models import User, UserSkill, Exchange, Feedback, Conversation, Message
 
+class UserSkillSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserSkill
+        fields = ['id', 'skill_name', 'description', 'proficiency_level', 'is_offering']
 
 class UserSerializer(serializers.ModelSerializer):
+    skills = UserSkillSerializer(many=True, read_only=True)
+    
     class Meta:
         model = User
-        fields = ['id', 'username', 'password']
-        extra_kwargs = {"password": {"write_only": True}}
-
-    def create(self ,validate_data):
-        user = User.objects.create_user(**validate_data)
+        fields = ['id', 'username', 'email', 'bio', 'location', 'profile_picture', 'skills']
+        extra_kwargs = {'password': {'write_only': True}}
+    
+    def create(self, validated_data):
+        user = User.objects.create_user(**validated_data)
         return user
 
-class SkillSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Skill
-        fields = ['id', 'name', 'description']
-
-
-class ProfileSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
-    offered_skills = SkillSerializer(many=True, read_only=True)
-    desired_skills = SkillSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = Profile
-        fields = ['id', 'user', 'bio', 'location', 'offered_skills', 'desired_skills']
-
-
-class PostSerializer(serializers.ModelSerializer):
-    profile = ProfileSerializer(read_only=True)
-    skills_offered = SkillSerializer(many=True, read_only=True)
-    skills_requested = SkillSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = Post
-        fields = ['id', 'profile', 'title', 'description', 'skills_offered', 'skills_requested', 'created_at']
-
-
-class MatchSerializer(serializers.ModelSerializer):
-    post = PostSerializer(read_only=True)
-    matched_with = ProfileSerializer(read_only=True)
-
-    class Meta:
-        model = Match
-        fields = ['id', 'post', 'matched_with', 'status', 'created_at']
-
-
-class MessageSerializer(serializers.ModelSerializer):
-    sender = ProfileSerializer(read_only=True)
-    receiver = ProfileSerializer(read_only=True)
-
-    class Meta:
-        model = Message
-        fields = ['id', 'sender', 'receiver', 'content', 'timestamp', 'is_read']
-
-
-class ScheduleSerializer(serializers.ModelSerializer):
-    match = MatchSerializer(read_only=True)
-
-    class Meta:
-        model = Schedule
-        fields = ['id', 'match', 'scheduled_time', 'location', 'confirmed']
-
-
 class FeedbackSerializer(serializers.ModelSerializer):
-    giver = ProfileSerializer(read_only=True)
-    receiver = ProfileSerializer(read_only=True)
-    match = MatchSerializer(read_only=True)
-
+    reviewer_username = serializers.ReadOnlyField(source='reviewer.username')
+    recipient_username = serializers.ReadOnlyField(source='recipient.username')
+    
     class Meta:
         model = Feedback
-        fields = ['id', 'giver', 'receiver', 'match', 'rating', 'comment', 'created_at']
+        fields = ['id', 'exchange', 'reviewer', 'reviewer_username', 'recipient', 
+                 'recipient_username', 'rating', 'comment', 'created_at']
+
+class ExchangeSerializer(serializers.ModelSerializer):
+    initiator_username = serializers.ReadOnlyField(source='initiator.username')
+    recipient_username = serializers.ReadOnlyField(source='recipient.username')
+    feedbacks = FeedbackSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = Exchange
+        fields = ['id', 'initiator', 'initiator_username', 'recipient', 'recipient_username',
+                 'initiator_skill', 'recipient_skill', 'status', 'created_at', 'updated_at', 'feedbacks']
+
+class MessageSerializer(serializers.ModelSerializer):
+    sender_username = serializers.ReadOnlyField(source='sender.username')
+    
+    class Meta:
+        model = Message
+        fields = ['id', 'conversation', 'sender', 'sender_username', 'content', 'read', 'created_at']
+
+class ConversationSerializer(serializers.ModelSerializer):
+    participants_detail = UserSerializer(source='participants', many=True, read_only=True)
+    latest_messages = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Conversation
+        fields = ['id', 'participants', 'participants_detail', 'created_at', 'updated_at', 'latest_messages']
+    
+    def get_latest_messages(self, obj):
+        # Get the last 5 messages
+        messages = obj.messages.order_by('-created_at')[:5]
+        return MessageSerializer(messages, many=True).data

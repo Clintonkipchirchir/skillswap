@@ -62,5 +62,4 @@ A complete ERD diagram can be generated using the provided Mermaid code (see doc
 
 - **Other Tools & Integrations:**  
   - JWT for token-based authentication
-  - Tailwind CSS (or any CSS framework) for responsive design
-  - Optional: Google Calendar API for scheduling integration
+ 

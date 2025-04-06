@@ -14,16 +14,23 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+# skillswap/urls.py
 from django.contrib import admin
 from django.urls import path, include
-from core.views import CreateUserView
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from django.conf import settings
+from django.conf.urls.static import static
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
 
 urlpatterns = [
-    path('core/user/register/', CreateUserView.as_view(), name='register'),
-    path('core/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('core/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('core-auth/', include('rest_framework.urls')),
     path('admin/', admin.site.urls),
     path('core/', include('core.urls')),
+    path('core/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('core/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
+
+# Serve media files in development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

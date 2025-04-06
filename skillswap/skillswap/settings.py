@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'core',
     'rest_framework',
     'rest_framework_simplejwt',
+    'django_filters',
 ]
 
 
@@ -58,6 +59,9 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_PERMISSI0NS_CALSSES": [
         "rest_framework.permissions.IsAuthenticated",
+    ],
+     'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
     ]
 }
 

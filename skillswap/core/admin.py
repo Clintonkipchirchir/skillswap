@@ -1,4 +1,3 @@
-# core/admin.py
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import User, UserSkill, Exchange, Feedback, Conversation, Message

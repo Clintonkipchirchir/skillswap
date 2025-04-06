@@ -1,5 +1,5 @@
-from django.shortcuts import get_object_or_404
-from rest_framework import viewsets, filters, status
+from django.db import models
+from rest_framework import viewsets, filters, status, serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -22,7 +22,7 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
     
     @action(detail=True, methods=['get'])
-    def skills(self, request, pk=None):
+    def skills(self, request, *args, **kwargs):
         user = self.get_object()
         skills = user.skills.all()
         serializer = UserSkillSerializer(skills, many=True)
@@ -87,7 +87,7 @@ class ExchangeViewSet(viewsets.ModelViewSet):
         serializer.save(initiator=self.request.user)
     
     @action(detail=True, methods=['post'])
-    def accept(self, request, pk=None):
+    def accept(self, request, *args, **kwargs):
         exchange = self.get_object()
         if exchange.recipient != request.user:
             return Response({"detail": "Only the recipient can accept exchanges"}, 
@@ -98,7 +98,7 @@ class ExchangeViewSet(viewsets.ModelViewSet):
         return Response({"status": "exchange accepted"})
     
     @action(detail=True, methods=['post'])
-    def complete(self, request, pk=None):
+    def complete(self, request, *args, **kwargs):
         exchange = self.get_object()
         if exchange.initiator != request.user and exchange.recipient != request.user:
             return Response({"detail": "Only participants can complete exchanges"}, 
@@ -147,7 +147,7 @@ class ConversationViewSet(viewsets.ModelViewSet):
         conversation.participants.add(self.request.user)
     
     @action(detail=True, methods=['get'])
-    def messages(self, request, pk=None):
+    def messages(self, *args, **kwargs):
         conversation = self.get_object()
         messages = conversation.messages.all().order_by('created_at')
         serializer = MessageSerializer(messages, many=True)

@@ -5,9 +5,12 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import User, UserSkill, Exchange, Feedback, Conversation, Message
-from .serializers import (UserSerializer, UserSkillSerializer, 
-                         ExchangeSerializer, FeedbackSerializer,
-                         ConversationSerializer, MessageSerializer)
+from .serializers import (UserSerializer, 
+                          UserSkillSerializer, 
+                         ExchangeSerializer, 
+                         FeedbackSerializer,
+                         ConversationSerializer, 
+                         MessageSerializer)
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()

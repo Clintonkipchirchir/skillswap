@@ -1,79 +1,84 @@
+from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.contrib.auth.models import User
 
-# Create your models here.
-class Skill(models.Model):
-    name = models.CharField(max_length=50, unique=True)
-    description = models.TextField(blank=True)
-
-    def __str__(self):
-        return self.name
-
-
-class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+class User(AbstractUser):
     bio = models.TextField(blank=True)
-    location = models.CharField(max_length=30, blank=True)
-    offered_skills = models.ManyToManyField(Skill, blank=True, related_name='offered')
-    desired_skills = models.ManyToManyField(Skill, blank=True, related_name='desired')
+    location = models.CharField(max_length=100, blank=True)
+    profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
     
-
     def __str__(self):
-        return self.user.username
+        return self.username
 
-
-class Post(models.Model):
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='posts')
-    title = models.CharField(max_length=100)
+class UserSkill(models.Model):
+    SKILL_LEVELS = (
+        ('beginner', 'Beginner'),
+        ('intermediate', 'Intermediate'),
+        ('advanced', 'Advanced'),
+        ('expert', 'Expert'),
+    )
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='skills')
+    skill_name = models.CharField(max_length=100)
     description = models.TextField()
-    skills_offered = models.ManyToManyField(Skill, related_name='post_offered_skills', blank=True)
-    skills_requested = models.ManyToManyField(Skill, related_name='post_requested_skills', blank=True)
+    proficiency_level = models.CharField(max_length=20, choices=SKILL_LEVELS)
+    is_offering = models.BooleanField(default=True)  # True if offering, False if seeking
+    
+    class Meta:
+        unique_together = ['user', 'skill_name', 'is_offering']
+        
+    def __str__(self):
+        return f"{self.user.username} - {'Offering' if self.is_offering else 'Seeking'} {self.skill_name}"
+
+class Exchange(models.Model):
+    STATUS_CHOICES = (
+        ('pending', 'Pending'),
+        ('accepted', 'Accepted'),
+        ('rejected', 'Rejected'),
+        ('completed', 'Completed'),
+        ('cancelled', 'Cancelled'),
+    )
+    
+    initiator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='initiated_exchanges')
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_exchanges')
+    initiator_skill = models.ForeignKey(UserSkill, on_delete=models.CASCADE, related_name='offered_exchanges')
+    recipient_skill = models.ForeignKey(UserSkill, on_delete=models.CASCADE, related_name='requested_exchanges')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
-
+    updated_at = models.DateTimeField(auto_now=True)
+    
     def __str__(self):
-        return self.title
-
-
-class Match(models.Model):
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='matches')
-    matched_with = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='matched_users')
-    status = models.CharField(max_length=20, choices=[('pending', 'Pending'), ('accepted', 'Accepted'), ('rejected', 'Rejected')], default='pending')
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.post} -> {self.matched_with.user.username}"
-
-
-class Message(models.Model):
-    sender = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='sent_messages')
-    receiver = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='received_messages')
-    content = models.TextField()
-    timestamp = models.DateTimeField(auto_now_add=True)
-    is_read = models.BooleanField(default=False)
-
-    def __str__(self):
-        return f"From {self.sender.user.username} to {self.receiver.user.username}"
-
-
-class Schedule(models.Model):
-    match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name='schedules')
-    scheduled_time = models.DateTimeField()
-    location = models.CharField(max_length=255)
-    confirmed = models.BooleanField(default=False)
-
-    def __str__(self):
-        return f"Session for {self.match}"
-
+        return f"{self.initiator.username} <-> {self.recipient.username}: {self.status}"
 
 class Feedback(models.Model):
-    giver = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='given_feedbacks')
-    receiver = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='received_feedbacks')
-    match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name='feedbacks')
-    rating = models.IntegerField(choices=[(i, str(i)) for i in range(1, 6)])  # 1-5 star rating
-    comment = models.TextField(blank=True)
+    RATING_CHOICES = [(i, i) for i in range(1, 6)]
+    
+    exchange = models.ForeignKey(Exchange, on_delete=models.CASCADE, related_name='feedbacks')
+    reviewer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='given_feedbacks')
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_feedbacks')
+    rating = models.IntegerField(choices=RATING_CHOICES)
+    comment = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-
+    
+    class Meta:
+        unique_together = ['exchange', 'reviewer']
+        
     def __str__(self):
-        return f"Feedback by {self.giver.user.username} for {self.receiver.user.username}"
+        return f"{self.reviewer.username} -> {self.recipient.username}: {self.rating}/5"
 
- 
+class Conversation(models.Model):
+    participants = models.ManyToManyField(User, related_name='conversations')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"Conversation {self.id}"
+
+class Message(models.Model):
+    conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name='messages')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
+    content = models.TextField()
+    read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.sender.username} in {self.conversation.id}: {self.content[:20]}..."

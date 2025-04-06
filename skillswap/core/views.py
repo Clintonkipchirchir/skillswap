@@ -121,15 +121,15 @@ class FeedbackViewSet(viewsets.ModelViewSet):
         exchange = serializer.validated_data['exchange']
         recipient = serializer.validated_data['recipient']
         
-        # Validate that the reviewer is part of the exchange
+        
         if self.request.user != exchange.initiator and self.request.user != exchange.recipient:
             raise serializers.ValidationError("You can only leave feedback for exchanges you participated in")
         
-        # Validate that the recipient is the other party in the exchange
+        
         if recipient != exchange.initiator and recipient != exchange.recipient:
             raise serializers.ValidationError("The recipient must be a participant in the exchange")
         
-        # Validate that the reviewer isn't reviewing themselves
+
         if self.request.user == recipient:
             raise serializers.ValidationError("You cannot leave feedback for yourself")
             
@@ -165,7 +165,7 @@ class MessageViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         conversation = serializer.validated_data['conversation']
         
-        # Ensure the user is a participant in this conversation
+
         if not conversation.participants.filter(id=self.request.user.id).exists():
             raise serializers.ValidationError("You cannot send messages to this conversation")
             

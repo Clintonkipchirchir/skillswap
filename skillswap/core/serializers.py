@@ -53,6 +53,6 @@ class ConversationSerializer(serializers.ModelSerializer):
         fields = ['id', 'participants', 'participants_detail', 'created_at', 'updated_at', 'latest_messages']
     
     def get_latest_messages(self, obj):
-        # Get the last 5 messages
+        
         messages = obj.messages.order_by('-created_at')[:5]
         return MessageSerializer(messages, many=True).data

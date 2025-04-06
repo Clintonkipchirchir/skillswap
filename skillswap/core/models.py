@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.contrib.auth.models import User
 
 class User(AbstractUser):
     bio = models.TextField(blank=True)
@@ -21,7 +22,7 @@ class UserSkill(models.Model):
     skill_name = models.CharField(max_length=100)
     description = models.TextField()
     proficiency_level = models.CharField(max_length=20, choices=SKILL_LEVELS)
-    is_offering = models.BooleanField(default=True)  # True if offering, False if seeking
+    is_offering = models.BooleanField(default=True)  
     
     class Meta:
         unique_together = ['user', 'skill_name', 'is_offering']
